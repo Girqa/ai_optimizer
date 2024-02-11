@@ -33,6 +33,8 @@ BrkIndividualDto::BrkIndividualDto(const web::json::object& data) {
 }
 
 NNService::NNService(web::uri addr): server(addr) {
+    spdlog::info("Started nn service on {0}",  "127.0.0.1:8080");
+
     server.register_handle(
             web::uri(L"/init"),
             web::http::methods::POST,

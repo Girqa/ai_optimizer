@@ -7,6 +7,7 @@
 
 #include "../http/HttpServer.h"
 #include "../composite_nn/NetworkController.h"
+#include "spdlog.h"
 
 struct LayerParamsDto {
     uint size;

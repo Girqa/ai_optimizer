@@ -71,7 +71,7 @@ void NeuralNetwork::propagateForward(const RowVector& input)
         cacheLayers[i] = neuronLayers[i]; // save sum of weighted inputs for back prop
         if (i != topology.size() - 1) {
             // calc activated state
-            neuronLayers[i] = neuronLayers[i].unaryExpr(std::ptr_fun(activationFunction));
+            neuronLayers[i] = neuronLayers[i].unaryExpr([](double v){ return activationFunction(v); });
         }
     }
 }
@@ -89,7 +89,7 @@ void NeuralNetwork::calculateErrors(const RowVector& output)
     for (uint i = topology.size() - 2; i > 0; i--) {
         layersErrors[i] = layersErrors[i + 1] * weights[i].transpose();
         if (i != topology.size() - 2) {
-            auto derivs = cacheLayers[i].unaryExpr(std::ptr_fun(activationFunctionDerivative));
+            auto derivs = cacheLayers[i].unaryExpr([](double v){ return activationFunctionDerivative(v); });
             layersErrors[i] = layersErrors[i].cwiseProduct(derivs);
         }
 

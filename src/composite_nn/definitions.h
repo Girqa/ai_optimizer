@@ -5,7 +5,7 @@
 #ifndef AI_DEFINITIONS_H
 #define AI_DEFINITIONS_H
 
-#include "eigen/Eigen/Eigen"
+#include "eigen.h"
 #include <iostream>
 
 typedef double Scalar;

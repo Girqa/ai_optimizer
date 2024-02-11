@@ -1,0 +1,32 @@
+include(../cmake_macro/CMakeLists.txt)
+set(INCLUDE_DIRS)
+GET_CURRENT_DIR_SUB_DIRS(INCLUDE_DIRS)
+
+get_filename_component(CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+
+# get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CURRENT_DIR_NAME}>
+)
+
+# This cmake file must be placed in the directory wich is placed in the root project directory
+message("\n___INCLUDE DIRS___")
+foreach(lib ${INCLUDE_DIRS})
+    message("\n______Included lib: ${lib}")
+    # string(REPLACE ${PARENT_DIR} "" RELATIVE_INSTALL_PATH ${lib})
+    # message("______Relative path to include .h files is {${RELATIVE_INSTALL_PATH}}\n")
+    # target_include_directories(${PROJECT_NAME} PUBLIC
+    #     $<BUILD_INTERFACE:${lib}>
+    #     $<INSTALL_INTERFACE:${CURRENT_DIR_NAME}>
+    #     )
+    add_subdirectory(${lib})
+endforeach()
+message("\n___END OF INCLUDE DIRS___")
+        
+# target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
+# target_include_directories(${PROJECT_NAME} PUBLIC eigen/)
+# target_include_directories(${PROJECT_NAME} PUBLIC spdlog/)
+# add_subdirectory(eigen)
+# add_subdirectory(spdlog)

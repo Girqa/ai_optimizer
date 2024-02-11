@@ -1,0 +1,11 @@
+# Puts list of directories in current dirrectory in RESULT variable
+function(GET_CURRENT_DIR_SUB_DIRS RESULT)
+    set(DIRS)
+    file(GLOB ALL_ITEMS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
+    foreach(item ${ALL_ITEMS})
+        if(IS_DIRECTORY ${item})
+            set(DIRS ${DIRS} ${item})
+        endif()
+    endforeach()
+    set(${RESULT} ${DIRS} PARENT_SCOPE)
+endfunction()

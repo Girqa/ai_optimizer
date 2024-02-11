@@ -29,8 +29,8 @@ double log_f(double val) {
 Scalar BCE::loss(const Network& net, const RowVector& actual) {
     RowVector ones(actual.size());
     ones.setOnes();
-    return -1 * (actual * net.output->output.unaryExpr(std::ptr_fun(log_f))
-                    + (net.output->output * -1 + ones).unaryExpr(std::ptr_fun(log_f)) * (actual * -1 + ones)
+    return -1 * (actual * net.output->output.unaryExpr([](double v){ return log_f(v); })
+                    + (net.output->output * -1 + ones).unaryExpr([](double v){ return log_f(v); }) * (actual * -1 + ones)
              ).sum();
 }
 RowVector BCE::dLoss(const Network& net, const RowVector& actual) {

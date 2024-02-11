@@ -1,2 +1,2 @@
-# ai_optimizer
-Diploma project. It's a web ai service withch should optimize the set of power network parameters.
+Создание проекта с vcpkg:
+cmake -S . -B cmake-build-debug -DCMAKE_TOOLCHAIN_FILE=C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake

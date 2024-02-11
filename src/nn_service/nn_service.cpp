@@ -33,7 +33,6 @@ BrkIndividualDto::BrkIndividualDto(const web::json::object& data) {
 }
 
 NNService::NNService(web::uri addr): server(addr) {
-    spdlog::info("Started nn service on {0}",  "127.0.0.1:8080");
 
     server.register_handle(
             web::uri(L"/init"),
@@ -119,11 +118,9 @@ void NNService::create_nn(const NetParamsDto& params) try {
             );
 
 } catch (std::exception& e) {
-    // TODO include fmt
-    std::string msg;
-    msg += "Can't instantiate network. Reason: ";
-    msg += e.what();
-    throw std::exception(msg.data());
+    throw std::exception(
+        fmt::format("Can't instantiate network. Reason: {}", e.what()).data()
+    );
 }
 
 void NNService::handle_individual(const web::http::http_request& req) {

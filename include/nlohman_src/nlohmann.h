@@ -5,4 +5,6 @@
 #ifndef AI_NLOHMAN_H
 #define AI_NLOHMAN_H
 
-#endif //AI_NLOHMAN_H
+#include "json/single_include/nlohmann/json.hpp"
+
+#endif//AI_NLOHMAN_H

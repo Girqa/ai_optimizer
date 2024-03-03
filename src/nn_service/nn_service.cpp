@@ -2,97 +2,68 @@
 // Created by Ярослав on 17.01.2024.
 //
 
+#include <utility>
+
+#include "../utils/serialization.h"
 #include "nn_service.h"
+#include "spdlog.h"
 
 // TODO: WARN: Check, whether u have memory leak!!!
 
-LayerParamsDto::LayerParamsDto(const web::json::object& obj) {
-    size = obj.at(U("size")).as_integer();
-    if (obj.find(U("activation")) != obj.end()) {
-        activation = utility::conversions::to_utf8string(obj.at(U("activation")).as_string());
+NNService::NNService(const std::string& calculatorAddr)
+    : client(calculatorAddr) {
+    server.Post("/init", [this](const httplib::Request& req, httplib::Response& res) {
+        this->handle_create_nn(req, res);
+    });
+
+    server.Post("/mutate", [this](const httplib::Request& req, httplib::Response& res) {
+        this->NNService::handle_individual(req, res);
+    });
+}
+
+void
+NNService::run_nn_service(const std::string& host, int port) {
+    spdlog::info(fmt::format("Run nn service on {}:{}", host, port));
+    server.listen(host, port);
+}
+
+void
+NNService::handle_create_nn(const httplib::Request& req, httplib::Response& res) {
+    try {
+        NetParamsDto paramsDto = fromJson<NetParamsDto>(req.body);
+        this->create_nn(paramsDto);
+
+        res.status = httplib::StatusCode::OK_200;
+    }
+    catch (std::exception& e) {
+        std::string msg = fmt::format("Error parsing NetParamsDto: {}", e.what());
+        spdlog::error(msg);
+        res.status = httplib::StatusCode::BadRequest_400;
+        res.set_content(msg, "text/html");
     }
 }
 
-NetParamsDto::NetParamsDto(const web::json::object& data) {
-    learningRate = data.at(U("learningRate")).as_double();
-    lossFunction = utility::conversions::to_utf8string(data.at(U("lossFunction")).as_string());
-
-    auto layersData = data.at(U("layers")).as_object();
-    for (const auto& layer: layersData) {
-        std::string key = utility::conversions::to_utf8string(layer.first);
-        LayerParamsDto layerDto = layer.second.as_object();
-        layers.insert(std::make_pair(key, layerDto));
-    }
-}
-
-BrkIndividualDto::BrkIndividualDto(const web::json::object& data) {
-    fitness = data.at(U("fitness")).as_double();
-    for (const auto& pos: data.at(U("positions")).as_object()) {
-        breakerPositions.emplace_back(pos.second.as_integer());
-    }
-}
-
-NNService::NNService(web::uri addr): server(addr) {
-
-    server.register_handle(
-            web::uri(L"/init"),
-            web::http::methods::POST,
-            std::bind(&NNService::handle_create_nn, this, std::placeholders::_1)
-            );
-
-    server.register_handle(
-            web::uri(L"/mutate"),
-            web::http::methods::POST,
-            std::bind(&NNService::handle_individual, this, std::placeholders::_1)
-            );
-}
-
-void NNService::run_nn_service() {
-    server.run();
-}
-
-void NNService::handle_create_nn(const web::http::http_request& req) {
-    req.extract_json()
-            .then([&req, this](web::json::value data){
-
-                try {
-                    NetParamsDto paramsDto = data.as_object();
-                    this->create_nn(paramsDto);
-
-                    return req.reply(web::http::status_codes::OK);
-                } catch (std::exception& e) {
-                    std::string msg("Parsing NetParamsDto: ");
-                    msg += e.what();
-                    std::cout << msg.data() << std::endl;
-                    return req.reply(web::http::status_codes::BadRequest, msg);
-                }
-
-            })
-            .wait();
-}
-
-ActivationFunction* toActivationFunction(const std::string& func) {
+ActivationFunction*
+toActivationFunction(const std::string& func) {
     if (func == "ReLu") return new ReLu();
     if (func == "Sigmoid") return new Sigmoid();
     if (func == "Linear") return new Linear();
 
-    std::string msg("Can't find appropriate activation function for");
-    msg += func;
-    throw std::exception((msg + func).data());
+    throw std::runtime_error(fmt::format("Can't find appropriate activation function for {}", func).c_str());
 }
 
-LossFunction* toLossFunction(const std::string& func) {
+LossFunction*
+toLossFunction(const std::string& func) {
     if (func == "MSE") return new MSE();
     if (func == "RMSE") return new RMSE();
     if (func == "BCE") return new BCE();
 
-    std::string msg("Can't find appropriate loss function for");
-    msg += func;
-    throw std::exception((msg + func).data());
+    throw std::runtime_error(fmt::format("Can't find appropriate loss function for {}", func).c_str());
 }
 
-void NNService::create_nn(const NetParamsDto& params) try {
-    if (params.layers.size() < 3) throw std::exception("NN must have at least 3 layers: input, hidden, output");
+void
+NNService::create_nn(const NetParamsDto& params) try {
+    if (params.layers.size() < 3) throw std::runtime_error("NN must have at least 3 layers: input, hidden, output");
     auto layer = params.layers.begin();
     auto inputLayer = new InputLayer((*layer).second.size);
     ++layer;
@@ -111,40 +82,79 @@ void NNService::create_nn(const NetParamsDto& params) try {
             new Network(
                     inputLayer,
                     hLayers,
-                    outputLayer
-                    ),
-            toLossFunction(params.lossFunction),
-            params.learningRate
-            );
-
-} catch (std::exception& e) {
-    throw std::exception(
-        fmt::format("Can't instantiate network. Reason: {}", e.what()).data()
-    );
+                    outputLayer),
+            new NNService::MutatorLossFunction(std::bind(&NNService::calculate_fit, this, std::placeholders::_1)),
+            params.learningRate);
+}
+catch (const std::exception& e) {
+    throw std::runtime_error(fmt::format("Can't instantiate network. Reason: {}", e.what()).data());
 }
 
-void NNService::handle_individual(const web::http::http_request& req) {
-    req.extract_json()
-            .then([&req, this](web::json::value data) {
-                try {
-                    auto individual = BrkIndividualDto(data.as_object());
-
-                } catch (std::exception& e) {
-
-                }
-            });
+RowVector
+getPositions(const BrkIndividualDto& individual) {
+    RowVector positions(individual.breakerPositions.size());
+    for (int i = 0; i < individual.breakerPositions.size(); ++i) {
+        positions[i] = individual.breakerPositions[i];
+    }
+    return positions;
 }
 
-Scalar NNService::calculate_fit() {
-    return 0;
+BrkIndividualDto
+getBrkIndividualDto(const RowVector& positions, Scalar fitness) {
+    BrkIndividualDto dto;
+    dto.fitness = fitness;
+
+    for (int i = 0; i < positions.size(); ++i) {
+        dto.breakerPositions.push_back(positions[i]);
+    }
+
+    return dto;
 }
 
-NNService::MutatorLossFunction::MutatorLossFunction(std::function<Scalar(std::vector<int>)> _remoteFitter): remoteFitter(_remoteFitter) {}
+void
+NNService::handle_individual(const httplib::Request& req, httplib::Response& res) {
+    try {
+        BrkIndividualDto individual = fromJson<BrkIndividualDto>(req.body);
+        RowVector positions = getPositions(individual);
 
-Scalar NNService::MutatorLossFunction::loss(const Network& net, const RowVector& actual) {
+        RowVector fitness(1);
+        fitness[0] = individual.fitness;
+        net_controller.train(positions, fitness);
 
-    return 0;
+        RowVector mutatedIndividualPositions = net_controller.predict(positions);
+        Scalar mutatedFitness = calculate_fit(mutatedIndividualPositions);
+        BrkIndividualDto mutatedIndDto = getBrkIndividualDto(mutatedIndividualPositions, mutatedFitness);
+
+        res.status = httplib::StatusCode::OK_200;
+        res.set_content(toJson(mutatedIndDto), "application/json");
+    }
+    catch (std::exception& e) {
+        throw std::runtime_error(fmt::format("Can't mutate individual. Reason: {}", e.what()).data());
+    }
 }
-RowVector NNService::MutatorLossFunction::dLoss(const Network& net, const RowVector& actual) {
-    return RowVector();
+
+Scalar
+NNService::calculate_fit(const RowVector& individual) {
+    nlohmann::json body;
+    for (int i = 0; i < individual.size(); ++i) {
+        body["individual"][i] = individual[i];
+    }
+    
+    httplib::Result res = client.Post("/calculate", body.dump(), "application/json");
+    nlohmann::json resp(res->body);
+
+    return std::stod(resp["fitness"].dump());
+}
+
+NNService::MutatorLossFunction::MutatorLossFunction(std::function<Scalar(const RowVector&)> _remoteFitter) : remoteFitter(std::move(_remoteFitter)) {}
+
+Scalar
+NNService::MutatorLossFunction::loss(const Network& net, const RowVector& actual) {
+    Scalar beforeMutationFit = actual[0];
+    Scalar afterMutationFit = remoteFitter(net.output->output);
+    return (beforeMutationFit - afterMutationFit) / beforeMutationFit;
+}
+RowVector
+NNService::MutatorLossFunction::dLoss(const Network& net, const RowVector& actual) {
+    return (net.input->output - net.output->output) * loss(net, actual);
 }

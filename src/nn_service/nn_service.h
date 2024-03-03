@@ -5,57 +5,39 @@
 #ifndef AI_NN_SERVICE_H
 #define AI_NN_SERVICE_H
 
-#include "../http/HttpServer.h"
-#include "../composite_nn/NetworkController.h"
+#include "httplib.h"
 #include "spdlog.h"
-
-struct LayerParamsDto {
-    uint size;
-    std::string activation;
-
-    LayerParamsDto(const web::json::object& obj);
-};
-
-struct NetParamsDto {
-    std::map<std::string, LayerParamsDto> layers;
-    Scalar learningRate;
-    std::string lossFunction;
-    NetParamsDto(const web::json::object& data);
-};
-
-struct BrkIndividualDto {
-    std::vector<Scalar> breakerPositions;
-    Scalar fitness;
-    BrkIndividualDto(const web::json::object& data);
-};
+#include "../composite_nn/NetworkController.h"
+#include "../dto/dtos.h"
 
 class NNService {
-    HttpServer server;
+    httplib::Server server;
+    httplib::Client client;
     NetworkController net_controller;
 
 public:
-    NNService(web::uri addr);
+    NNService() = delete;
 
-    void run_nn_service();
+    NNService(const std::string& calculatorAddr);
+
+    void run_nn_service(const std::string& host, int port);
 
 protected:
-    void handle_create_nn(const web::http::http_request& req);
+    void handle_create_nn(const httplib::Request& req, httplib::Response &res);
 
     void create_nn(const NetParamsDto& layers);
 
-    void handle_individual(const web::http::http_request& req);
+    void handle_individual(const httplib::Request& req, httplib::Response &res);
 
-    Scalar calculate_fit();
+    Scalar calculate_fit(const RowVector& individual);
 
-    class MutatorLossFunction: LossFunction {
-        std::function<Scalar(std::vector<int>)> remoteFitter;
+    class MutatorLossFunction: public LossFunction {
+        std::function<Scalar(const RowVector&)> remoteFitter;
     public:
-        MutatorLossFunction(std::function<Scalar(std::vector<int>)> _remoteFitter);
+        MutatorLossFunction(std::function<Scalar(const RowVector&)> _remoteFitter);
         Scalar loss(const Network& net, const RowVector& actual) override;
         RowVector dLoss(const Network& net, const RowVector& actual) override;
     };
 };
-
-
 
 #endif//AI_NN_SERVICE_H

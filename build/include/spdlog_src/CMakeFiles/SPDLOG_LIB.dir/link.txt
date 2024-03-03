@@ -1,2 +1,0 @@
-/usr/bin/ar qc libSPDLOG_LIB.a 
-/usr/bin/ranlib libSPDLOG_LIB.a

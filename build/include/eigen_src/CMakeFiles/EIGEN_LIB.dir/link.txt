@@ -1,0 +1,2 @@
+/usr/bin/ar qc libEIGEN_LIB.a 
+/usr/bin/ranlib libEIGEN_LIB.a

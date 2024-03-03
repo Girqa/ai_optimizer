@@ -1,0 +1,15 @@
+/home/kalter/cpp/ai_optimizer/build/CMakeFiles/ai.dir
+/home/kalter/cpp/ai_optimizer/build/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/CMakeFiles/rebuild_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/CMakeFiles/rebuild_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/spdlog_src/CMakeFiles/SPDLOG_LIB.dir
+/home/kalter/cpp/ai_optimizer/build/include/spdlog_src/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/spdlog_src/CMakeFiles/rebuild_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/eigen_src/CMakeFiles/EIGEN_LIB.dir
+/home/kalter/cpp/ai_optimizer/build/include/eigen_src/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/eigen_src/CMakeFiles/rebuild_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/nlohman_src/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/nlohman_src/CMakeFiles/rebuild_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/cpp_httplib_src/CMakeFiles/edit_cache.dir
+/home/kalter/cpp/ai_optimizer/build/include/cpp_httplib_src/CMakeFiles/rebuild_cache.dir

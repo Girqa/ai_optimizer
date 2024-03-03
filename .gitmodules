@@ -1,0 +1,9 @@
+[submodule "include/eigen_src/eigen"]
+	path = include/eigen_src/eigen
+	url = https://github.com/libigl/eigen.git
+[submodule "include/spdlog_src/spdlog"]
+	path = include/spdlog_src/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "include/nlohman_src/json"]
+	path = include/nlohman_src/json
+	url = https://github.com/nlohmann/json.git
